@@ -40,6 +40,12 @@ struct Post: Codable, Identifiable {
     let createdAt: String
 }
 
+struct PostPage: Codable {
+    let posts: [Post]
+    let nextCursor: String?
+    let hasMore: Bool
+}
+
 // MARK: - Conversation
 
 struct Conversation: Codable, Identifiable {
@@ -64,17 +70,7 @@ struct Message: Codable, Identifiable {
     let createdAt: String
 }
 
-// MARK: - Deal (escrow)
-
-enum DealStatus: Int, Codable {
-    case none = 0
-    case created = 1
-    case shipped = 2
-    case confirmed = 3
-    case disputed = 4
-    case resolved = 5
-    case cancelled = 6
-}
+// MARK: - Deal
 
 struct Deal: Codable, Identifiable {
     let id: String
@@ -82,6 +78,38 @@ struct Deal: Codable, Identifiable {
     let seller: String
     let amount: Double
     let description: String
-    let status: DealStatus
+    let status: String     // created | shipped | confirmed | disputed | resolved | cancelled
+    let txHash: String?
     let createdAt: String
+}
+
+// MARK: - Deal status helpers
+
+extension Deal {
+    var statusLabel: String {
+        switch status {
+        case "created":   return "Awaiting Shipment"
+        case "shipped":   return "In Transit"
+        case "confirmed": return "Completed"
+        case "disputed":  return "Disputed"
+        case "resolved":  return "Resolved"
+        case "cancelled": return "Cancelled"
+        default:          return status.capitalized
+        }
+    }
+
+    var statusColor: String {
+        switch status {
+        case "created":   return "yellow"
+        case "shipped":   return "blue"
+        case "confirmed": return "green"
+        case "disputed":  return "red"
+        case "resolved":  return "green"
+        case "cancelled": return "gray"
+        default:          return "gray"
+        }
+    }
+
+    var isActive: Bool { status == "created" || status == "shipped" }
+    var isBuyer:  Bool { false } // resolved with wallet context at call site
 }
